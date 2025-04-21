@@ -84,11 +84,28 @@ typedef struct
 
 /*----------------------- Inline functions -----------------------*/
 /**
- * @brief   Enable interrupt which is corresponding to input IRQ number
+ * @brief   Enable a specific interrupt which is corresponding to input IRQ number
+ * 
+ * @note    Read stm32-cortexm4-mcus-mpus pg. 210
+ *          Calculation:
+ *              IRQn >> 5 = IRQn / 32
+ *                  . Each shift divided the value by 2
+ *                  . 5 shifts -> divided by 2^5 = 32
+ * 
+ *              IRQn & 0x1F = IRQn % 32
+ *                  . 0x1F = first 5 bits (0-31) which is the remainer when modulo with 32
+ *              
+ * @param   IRQn - Device specific interrupt number
+ * @retval  None
  */
 __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
 {
-    
+    /* External interrupt numbers >= 0 */
+    if ((int32_t)(IRQn) >= 0)
+    {
+        uint32_t position = ((uint32_t)IRQn >> 5UL);
+        NVIC->ISER[position] = (uint32_t)(1UL << ((uint32_t)IRQn & 0x1FUL));
+    }
 }
 
 /**
